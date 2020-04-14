@@ -1,4 +1,4 @@
-module splitwise-go
+module github.com/rahulkhairwar/splitwise-go
 
 go 1.14
 
