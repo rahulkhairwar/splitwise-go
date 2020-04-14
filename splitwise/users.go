@@ -1,4 +1,4 @@
-package internal
+package splitwise
 
 import (
 	"errors"
@@ -38,18 +38,18 @@ type User struct {
 		Medium string `json:"medium"`
 		Large  string `json:"large"`
 	} `json:"picture"`
-	Email string `json:"email"`
-	RegistrationStatus RegistrationStatus `json:"registration_status"`
-	DefaultCurrency string `json:"default_currency"`
-	Locale string `json:"locale"`
-	NotificationsRead string `json:"notifications_read"`
-	NotificationsCount int `json:"notifications_count"`
+	Email                    string             `json:"email"`
+	RegistrationStatus       RegistrationStatus `json:"registration_status"`
+	DefaultCurrency          string             `json:"default_currency"`
+	Locale                   string             `json:"locale"`
+	NotificationsRead        string             `json:"notifications_read"`
+	NotificationsCount       int                `json:"notifications_count"`
 	NotificationsPreferences struct {
 		AddedAsFriend bool `json:"added_as_friend"`
 	} `json:"notifications"`
 }
 
-func (c* Client) GetCurrentUser() (*User, error) {
+func (c*Client) GetCurrentUser() (*User, error) {
 	req, err := c.Get("/get_current_user", nil)
 
 	var user *User
