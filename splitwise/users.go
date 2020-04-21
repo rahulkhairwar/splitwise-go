@@ -1,6 +1,7 @@
 package splitwise
 
 import (
+	"context"
 	"errors"
 	"fmt"
 )
@@ -49,11 +50,28 @@ type User struct {
 	} `json:"notifications"`
 }
 
-func (c*Client) GetCurrentUser() (*User, error) {
+func (c *Client) GetCurrentUser(ctx context.Context) (*User, error) {
 	req, err := c.Get("/get_current_user", nil)
 
 	var user *User
-	_, err = c.do(req, &user)
+
+	_, err = c.do(ctx, req, &user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
+}
+
+func (c *Client) GetUser(ctx context.Context, id int) (*User, error) {
+	req, err := c.Get(fmt.Sprintf("/get_user/:%d", id), nil)
+
+	var user *User
+
+	_, err = c.do(ctx, req, &user)
+	if err != nil {
+		return nil, err
+	}
 
 	return user, err
 }
