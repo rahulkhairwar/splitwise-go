@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	BaseUrl = "https://www.splitwise.com"
+	BaseUrl = "https://secure.splitwise.com"
 	VERSION = "v3.0"
 
 	RequestTokenUrl   = BaseUrl + "/api/" + VERSION + "/get_request_token"
