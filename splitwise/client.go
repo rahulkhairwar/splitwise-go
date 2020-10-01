@@ -1,107 +1,111 @@
 package splitwise
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
+	"fmt"
+	"golang.org/x/oauth2"
+	"io/ioutil"
+	"log"
+	"math/rand"
 	"net/http"
-	"net/url"
+	"time"
 )
 
+var alphabet = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-0123456789")
+
 type Client struct {
-	clientId   string
-	secret     string
-	publicKey  string
-	httpClient *http.Client
-
-	BaseUrl   *url.URL
-	UserAgent string
+	*RestClient
+	conf   *oauth2.Config
+	state  string
+	logger log.Logger
+	token  *oauth2.Token
 }
 
-type ClientOptions struct {
-	ClientId   string
-	Secret     string
-	PublicKey  string
-	HttpClient *http.Client
-	BaseUrl    *url.URL
-	UserAgent  string
+func New(consumerKey, secret, redirectUrl string, httpClient http.Client) *Client {
+	return &Client{
+		RestClient: &RestClient{
+			HttpClient: &httpClient,
+		},
+		conf: &oauth2.Config{
+			RedirectURL:  redirectUrl,
+			ClientID:     consumerKey,
+			ClientSecret: secret,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  AuthorizeUrl,
+				TokenURL: TokenUrl,
+			},
+		},
+		logger: log.Logger{},
+	}
 }
 
-func NewClient(options ClientOptions) (*Client, error) {
-	if options.HttpClient == nil {
-		options.HttpClient = &http.Client{}
+func (c *Client) handleLogin(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (c *Client) handleCallback(w http.ResponseWriter, r *http.Request) {
+	if r.FormValue("state") != "randomState" {
+		fmt.Println("Invalid state!")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
 
-	return &Client{
-		clientId:   options.ClientId,
-		secret:     options.Secret,
-		publicKey:  options.PublicKey,
-		httpClient: options.HttpClient,
-		BaseUrl:    options.BaseUrl,
-		UserAgent:  options.UserAgent,
-	}, nil
-}
-
-func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
-	req = req.WithContext(ctx)
-
-	resp, err := c.httpClient.Do(req)
+	token, err := c.conf.Exchange(context.Background(), r.FormValue("code"))
 	if err != nil {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
+		fmt.Println("failed to get token due to : ", err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
 
-		return nil, err
+	resp, err := http.Get("https://secure.splitwise.com/api/v3.0/get_current_user?access_token=" + token.AccessToken)
+	if err != nil {
+		fmt.Println("failed to GET current user from Splitwise due to : ", err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
 	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(v)
-	return resp, err
-}
-
-func (c *Client) Get(path string, body interface{}) (*http.Request, error) {
-	return c.newRequest("GET", path, body)
-}
-
-func (c *Client) Post(path string, body interface{}) (*http.Request, error) {
-	return c.newRequest("POST", path, body)
-}
-
-func (c *Client) Put(path string, body interface{}) (*http.Request, error) {
-	return c.newRequest("PUT", path, body)
-}
-
-func (c *Client) Delete(path string, body interface{}) (*http.Request, error) {
-	return c.newRequest("DELETE", path, body)
-}
-
-func (c *Client) newRequest(method, path string, body interface{}) (*http.Request, error) {
-	rel := &url.URL{Path: path}
-	u := c.BaseUrl.ResolveReference(rel)
-
-	var buf io.ReadWriter
-	if body != nil {
-		buf = new(bytes.Buffer)
-		err := json.NewEncoder(buf).Encode(body)
-		if err != nil {
-			return nil, err
-		}
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("failed to read all from response body due to : ", err)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
+	fmt.Println("current_user : ", string(bytes))
+}
 
-	req, err := http.NewRequest(method, u.String(), buf)
+func (c *Client) GetCurrentUser(ctx context.Context) (*User, error) {
+	url := c.accessTokenToUrl(GetCurrentUserUrl)
+	fmt.Println("GetCurrentUser url : ", url)
+	resp, err := c.Get(ctx, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
+	var user User
+	bts, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
+	if err = json.Unmarshal(bts, &user); err != nil {
+		return nil, err
+	}
+	return &user, err
+}
 
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", c.UserAgent)
+func (c *Client) accessTokenToUrl(url string) string {
+	return url + "?access_token=" + c.token.AccessToken
+}
 
-	return req, nil
+func generateRandomState() string {
+	// [65, 122]
+	rand.Seed(time.Now().UnixNano())
+	min, max := 65, 122
+	s := ""
+	for i := 0; i < 32; i++ {
+		s += string(rune(rand.Intn(57) + 48))
+	}
+	fmt.Println("generated state s : ", s)
+	fmt.Println(rand.Intn(max - min + 1) + min)
+	return s
 }
