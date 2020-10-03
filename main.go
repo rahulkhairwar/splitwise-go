@@ -7,16 +7,18 @@ import (
 	"golang.org/x/oauth2"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 )
 
 var (
-	consumerKey = os.Getenv("CONSUMER_KEY")
+	consumerKey    = os.Getenv("CONSUMER_KEY")
 	consumerSecret = os.Getenv("CONSUMER_SECRET")
-	conf = oauth2.Config{
+	conf           = oauth2.Config{
 		RedirectURL:  "http://localhost:8080/callback",
 		ClientID:     consumerKey,
 		ClientSecret: consumerSecret,
@@ -28,27 +30,38 @@ var (
 )
 
 func handleHome(w http.ResponseWriter, r *http.Request) {
-	var html = `<html><body><a href="/login">Google Login</a></body></html>`
+	var html = `<html><body><a href="/login">Splitwise Login</a></body></html>`
 	_, err := fmt.Fprint(w, html)
 	if err != nil {
 		log.Fatalln("failed to write to response writer due to : ", err)
 	}
 }
 
+var state = ""
+
 func handleLogin(w http.ResponseWriter, r *http.Request) {
-	url := conf.AuthCodeURL("randomState")
+	state = generateRandomState()
+	url := conf.AuthCodeURL(state)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-type x struct {
+var alphabet = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-0123456789")
 
+func generateRandomState() string {
+	rand.Seed(time.Now().UnixNano())
+	s := ""
+	for i := 0; i < 32; i++ {
+		s += string(alphabet[rand.Intn(len(alphabet))])
+	}
+	fmt.Println("generated state, s : ", s)
+	return s
 }
 
-func (z *x) handleCallback(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("state") != "randomState" {
-		 fmt.Println("Invalid state!")
-		 http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		 return
+func handleCallback(w http.ResponseWriter, r *http.Request) {
+	if r.FormValue("state") != state {
+		fmt.Println("Invalid state!")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
 
 	token, err := conf.Exchange(context.Background(), r.FormValue("code"))
@@ -75,11 +88,16 @@ func (z *x) handleCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	a := x{}
+	a := splitwise.New(consumerKey, consumerSecret, "http://localhost:8080/callback", "/", http.Client{})
 	http.HandleFunc("/", handleHome)
-	http.HandleFunc("/login", handleLogin)
-	http.HandleFunc("/callback", a.handleCallback)
+	http.HandleFunc("/login", a.HandleLogin)
+	http.HandleFunc("/callback", a.HandleCallback)
 	http.ListenAndServe(":8080", nil)
+
+/*	http.HandleFunc("/", handleHome)
+	http.HandleFunc("/login", handleLogin)
+	http.HandleFunc("/callback", handleCallback)
+	http.ListenAndServe(":8080", nil)*/
 }
 
 func main3() {
@@ -106,17 +124,16 @@ func main3() {
 }
 
 func main2() {
-	ctx := context.Background()
-	consumerKey := os.Getenv("CONSUMER_KEY")
-	consumerSecret := os.Getenv("CONSUMER_SECRET")
-	client := splitwise.New(consumerKey, consumerSecret, http.Client{})
-	user, err := client.GetCurrentUser(ctx)
-	if err != nil {
-		log.Fatalf("failed to get current user due to : %+v\n", err)
-	}
-	log.Printf("current user : %+v\n", user)
+	// ctx := context.Background()
+	// consumerKey := os.Getenv("CONSUMER_KEY")
+	// consumerSecret := os.Getenv("CONSUMER_SECRET")
+	// client := splitwise.New(consumerKey, consumerSecret, http.Client{})
+	// user, err := client.GetCurrentUser(ctx)
+	// if err != nil {
+	// 	log.Fatalf("failed to get current user due to : %+v\n", err)
+	// }
+	// log.Printf("current user : %+v\n", user)
 
 	// splitwise.Do(consumerKey, consumerSecret)
-
 	// fmt.Printf("httpClient : %+v\n", httpClient)
 }
