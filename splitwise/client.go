@@ -85,6 +85,26 @@ func (c *Client) GetCurrentUser(ctx context.Context) (*User, error) {
 	return resp.User, err
 }
 
+func (c* Client) GetUser(ctx context.Context, id int64) (*User, error) {
+	url := c.addAccessTokenToUrl(fmt.Sprintf(GetUserUrl, id))
+	r, err := c.Get(ctx, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp struct {
+		User *User `json:"user"`
+	}
+	bts, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	if err = json.Unmarshal(bts, &resp); err != nil {
+		return nil, err
+	}
+	return resp.User, err
+}
+
 func (c *Client) addAccessTokenToUrl(url string) string {
 	return url + "?access_token=" + c.accessToken
 }
