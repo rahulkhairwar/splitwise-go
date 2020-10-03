@@ -50,7 +50,7 @@ func TestClient_GetCurrentUser(t *testing.T) {
 	}
 }
 
-func TestClient_accessTokenToUrl(t *testing.T) {
+func TestClient_addAccessTokenToUrl(t *testing.T) {
 	type fields struct {
 		RestClient *RestClient
 		conf       *oauth2.Config
@@ -78,8 +78,8 @@ func TestClient_accessTokenToUrl(t *testing.T) {
 				logger:     tt.fields.logger,
 				token:      tt.fields.token,
 			}
-			if got := c.accessTokenToUrl(tt.args.url); got != tt.want {
-				t.Errorf("accessTokenToUrl() = %v, want %v", got, tt.want)
+			if got := c.addAccessTokenToUrl(tt.args.url); got != tt.want {
+				t.Errorf("addAccessTokenToUrl() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -155,10 +155,11 @@ func TestClient_handleLogin(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	type args struct {
-		consumerKey string
-		secret      string
-		redirectUrl string
-		httpClient  http.Client
+		consumerKey    string
+		secret         string
+		redirectUrl    string
+		errRedirectUrl string
+		httpClient     http.Client
 	}
 	tests := []struct {
 		name string
@@ -169,7 +170,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := New(tt.args.consumerKey, tt.args.secret, tt.args.redirectUrl, tt.args.httpClient); !reflect.DeepEqual(got, tt.want) {
+			if got := New(tt.args.consumerKey, tt.args.secret, tt.args.redirectUrl, tt.args.errRedirectUrl, tt.args.httpClient); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("New() = %v, want %v", got, tt.want)
 			}
 		})

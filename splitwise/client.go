@@ -16,13 +16,14 @@ var alphabet = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-012
 
 type Client struct {
 	*RestClient
-	conf   *oauth2.Config
-	state  string
-	logger log.Logger
-	token  *oauth2.Token
+	conf           *oauth2.Config
+	state          string
+	errRedirectUrl string
+	logger         log.Logger
+	accessToken    string
 }
 
-func New(consumerKey, secret, redirectUrl string, httpClient http.Client) *Client {
+func New(consumerKey, secret, redirectUrl, errRedirectUrl string, httpClient http.Client) *Client {
 	return &Client{
 		RestClient: &RestClient{
 			HttpClient: &httpClient,
@@ -36,76 +37,63 @@ func New(consumerKey, secret, redirectUrl string, httpClient http.Client) *Clien
 				TokenURL: TokenUrl,
 			},
 		},
-		logger: log.Logger{},
+		errRedirectUrl: errRedirectUrl,
+		logger:         log.Logger{},
 	}
 }
 
-func (c *Client) handleLogin(w http.ResponseWriter, r *http.Request) {
-
+func (c *Client) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	c.state = generateRandomState()
+	url := c.conf.AuthCodeURL(c.state)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func (c *Client) handleCallback(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("state") != "randomState" {
+func (c *Client) HandleCallback(w http.ResponseWriter, r *http.Request) {
+	state := r.FormValue("state")
+	if state == "" || state != c.state {
 		fmt.Println("Invalid state!")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, c.errRedirectUrl, http.StatusTemporaryRedirect)
 		return
 	}
 
 	token, err := c.conf.Exchange(context.Background(), r.FormValue("code"))
 	if err != nil {
 		fmt.Println("failed to get token due to : ", err)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, c.errRedirectUrl, http.StatusTemporaryRedirect)
 		return
 	}
-
-	resp, err := http.Get("https://secure.splitwise.com/api/v3.0/get_current_user?access_token=" + token.AccessToken)
-	if err != nil {
-		fmt.Println("failed to GET current user from Splitwise due to : ", err)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-	defer resp.Body.Close()
-	bytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("failed to read all from response body due to : ", err)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-	fmt.Println("current_user : ", string(bytes))
+	c.accessToken = token.AccessToken
 }
 
 func (c *Client) GetCurrentUser(ctx context.Context) (*User, error) {
-	url := c.accessTokenToUrl(GetCurrentUserUrl)
-	fmt.Println("GetCurrentUser url : ", url)
-	resp, err := c.Get(ctx, url, nil)
+	url := c.addAccessTokenToUrl(GetCurrentUserUrl)
+	r, err := c.Get(ctx, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var user User
-	bts, err := ioutil.ReadAll(resp.Body)
+	var resp struct {
+		User *User `json:"user"`
+	}
+	bts, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
-	if err = json.Unmarshal(bts, &user); err != nil {
+	if err = json.Unmarshal(bts, &resp); err != nil {
 		return nil, err
 	}
-	return &user, err
+	return resp.User, err
 }
 
-func (c *Client) accessTokenToUrl(url string) string {
-	return url + "?access_token=" + c.token.AccessToken
+func (c *Client) addAccessTokenToUrl(url string) string {
+	return url + "?access_token=" + c.accessToken
 }
 
 func generateRandomState() string {
-	// [65, 122]
 	rand.Seed(time.Now().UnixNano())
-	min, max := 65, 122
-	s := ""
+	var s string
 	for i := 0; i < 32; i++ {
-		s += string(rune(rand.Intn(57) + 48))
+		s += string(alphabet[rand.Intn(len(alphabet))])
 	}
-	fmt.Println("generated state s : ", s)
-	fmt.Println(rand.Intn(max - min + 1) + min)
 	return s
 }
