@@ -13,7 +13,7 @@ var (
 	TokenUrl        = splitwiseUrl + "/oauth/token"
 
 	GetCurrentUserUrl = BaseApiUrl + "/get_current_user"
-	GetUserUrl        = BaseApiUrl + "/get_user"
+	GetUserUrl        = BaseApiUrl + "/get_user/%d"
 	GetFriendsUrl     = BaseApiUrl + "/get_friends"
 	GetGroupsUrl      = BaseApiUrl + "/get_groups"
 	GetGroupUrl       = BaseApiUrl + "/get_group"
