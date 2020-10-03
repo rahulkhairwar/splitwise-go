@@ -11,11 +11,11 @@ import (
 
 func TestClient_GetCurrentUser(t *testing.T) {
 	type fields struct {
-		RestClient *RestClient
-		conf       *oauth2.Config
-		state      string
-		logger     log.Logger
-		token      *oauth2.Token
+		RestClient  *RestClient
+		conf        *oauth2.Config
+		state       string
+		logger      log.Logger
+		accessToken string
 	}
 	type args struct {
 		ctx context.Context
@@ -32,11 +32,11 @@ func TestClient_GetCurrentUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				RestClient: tt.fields.RestClient,
-				conf:       tt.fields.conf,
-				state:      tt.fields.state,
-				logger:     tt.fields.logger,
-				token:      tt.fields.token,
+				RestClient:  tt.fields.RestClient,
+				conf:        tt.fields.conf,
+				state:       tt.fields.state,
+				logger:      tt.fields.logger,
+				accessToken: tt.fields.accessToken,
 			}
 			got, err := c.GetCurrentUser(tt.args.ctx)
 			if (err != nil) != tt.wantErr {
@@ -52,11 +52,11 @@ func TestClient_GetCurrentUser(t *testing.T) {
 
 func TestClient_addAccessTokenToUrl(t *testing.T) {
 	type fields struct {
-		RestClient *RestClient
-		conf       *oauth2.Config
-		state      string
-		logger     log.Logger
-		token      *oauth2.Token
+		RestClient  *RestClient
+		conf        *oauth2.Config
+		state       string
+		logger      log.Logger
+		accessToken string
 	}
 	type args struct {
 		url string
@@ -72,11 +72,11 @@ func TestClient_addAccessTokenToUrl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				RestClient: tt.fields.RestClient,
-				conf:       tt.fields.conf,
-				state:      tt.fields.state,
-				logger:     tt.fields.logger,
-				token:      tt.fields.token,
+				RestClient:  tt.fields.RestClient,
+				conf:        tt.fields.conf,
+				state:       tt.fields.state,
+				logger:      tt.fields.logger,
+				accessToken: tt.fields.accessToken,
 			}
 			if got := c.addAccessTokenToUrl(tt.args.url); got != tt.want {
 				t.Errorf("addAccessTokenToUrl() = %v, want %v", got, tt.want)
@@ -87,11 +87,11 @@ func TestClient_addAccessTokenToUrl(t *testing.T) {
 
 func TestClient_handleCallback(t *testing.T) {
 	type fields struct {
-		RestClient *RestClient
-		conf       *oauth2.Config
-		state      string
-		logger     log.Logger
-		token      *oauth2.Token
+		RestClient  *RestClient
+		conf        *oauth2.Config
+		state       string
+		logger      log.Logger
+		accessToken string
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -107,11 +107,11 @@ func TestClient_handleCallback(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				RestClient: tt.fields.RestClient,
-				conf:       tt.fields.conf,
-				state:      tt.fields.state,
-				logger:     tt.fields.logger,
-				token:      tt.fields.token,
+				RestClient:  tt.fields.RestClient,
+				conf:        tt.fields.conf,
+				state:       tt.fields.state,
+				logger:      tt.fields.logger,
+				accessToken: tt.fields.accessToken,
 			}
 
 			_ = c.conf
@@ -121,11 +121,11 @@ func TestClient_handleCallback(t *testing.T) {
 
 func TestClient_handleLogin(t *testing.T) {
 	type fields struct {
-		RestClient *RestClient
-		conf       *oauth2.Config
-		state      string
-		logger     log.Logger
-		token      *oauth2.Token
+		RestClient  *RestClient
+		conf        *oauth2.Config
+		state       string
+		logger      log.Logger
+		accessToken string
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -141,11 +141,11 @@ func TestClient_handleLogin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				RestClient: tt.fields.RestClient,
-				conf:       tt.fields.conf,
-				state:      tt.fields.state,
-				logger:     tt.fields.logger,
-				token:      tt.fields.token,
+				RestClient:  tt.fields.RestClient,
+				conf:        tt.fields.conf,
+				state:       tt.fields.state,
+				logger:      tt.fields.logger,
+				accessToken: tt.fields.accessToken,
 			}
 
 			_ = c.conf
