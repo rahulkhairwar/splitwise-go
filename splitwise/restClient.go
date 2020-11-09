@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -59,8 +60,10 @@ func (c *RestClient) do(ctx context.Context, method, url string, body interface{
 	for k, v := range params {
 		q.Add(k, v)
 	}
+
 	req.URL.RawQuery = q.Encode()
 	req = req.WithContext(ctx)
+	fmt.Printf("Sending {%s} request to {%s} with :\nbody = {%+v}\nparams = {%+v}\n", method, url, body, params)
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
