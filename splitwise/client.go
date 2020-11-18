@@ -151,6 +151,66 @@ func (c *Client) UpdateUser(ctx context.Context, user *User) (*UpdateUserRespons
 	return &r, nil
 }
 
+func (c *Client) GetGroups(ctx context.Context) ([]*Group, error) {
+	return nil, nil
+}
+
+func (c * Client) GetGroupById(ctx context.Context, id int64) (*Group, error) {
+	return nil, nil
+}
+
+func (c* Client) CreateGroup(ctx context.Context, g *Group) (*Group, error) {
+	type r struct {
+		*Group
+		Errors []string `json:"errors"`
+	}
+	var resp struct {
+		Group *r `json:"group"`
+	}
+	fmt.Println("resp : ", resp)
+	return nil, nil
+}
+
+func (c* Client) DeleteGroupById(ctx context.Context, id int64) (*DeleteResponse, error) {
+	return nil, nil
+}
+
+func (c* Client) UndeleteGroupById(ctx context.Context, id int64) (*DeleteResponse, error) {
+	return nil, nil
+}
+
+func (c* Client) AddUserToGroup(ctx context.Context, groupId, userId int64, firstName, lastName, email string) (*DeleteResponse, error) {
+	return nil, nil
+}
+
+func (c* Client) RemoveUserFromGroup(ctx context.Context, groupId, userId int64) (*DeleteResponse, error) {
+	return nil, nil
+}
+
+func (c* Client) GetFriends(ctx context.Context) ([]*Friend, error) {
+	return nil, nil
+}
+
+func (c* Client) GetFriendById(ctx context.Context, id int64) (*Friend, error) {
+	return nil, nil
+}
+
+func (c* Client) CreateFriend(ctx context.Context, userEmail, userFirstName, userLastName string) (*Friend, error) {
+	return nil, nil
+}
+
+func (c* Client) CreateFriends(ctx context.Context, userEmails, userFirstNames, userLastNames []string) ([]*Friend, error) {
+	return nil, nil
+}
+
+func (c* Client) DeleteFriendById(ctx context.Context, id int64) (*DeleteResponse, error) {
+	return nil, nil
+}
+
+func (c* Client) GetExpenses(ctx context.Context) ([]*Expense, error) {
+	return nil, nil
+}
+
 func (c *Client) addAccessTokenToUrl(url string) string {
 	return url + "?access_token=" + c.accessToken
 }
