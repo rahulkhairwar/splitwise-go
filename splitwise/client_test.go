@@ -1,53 +1,18 @@
 package splitwise
 
 import (
-	"context"
+	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/oauth2"
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"testing"
 )
 
-func TestClient_GetCurrentUser(t *testing.T) {
-	type fields struct {
-		RestClient  *RestClient
-		conf        *oauth2.Config
-		state       string
-		logger      log.Logger
-		accessToken string
-	}
-	type args struct {
-		ctx context.Context
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *User
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Client{
-				RestClient:  tt.fields.RestClient,
-				conf:        tt.fields.conf,
-				state:       tt.fields.state,
-				logger:      tt.fields.logger,
-				accessToken: tt.fields.accessToken,
-			}
-			got, err := c.GetCurrentUser(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetCurrentUser() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetCurrentUser() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+func GetTestClient() *Client {
+	consumerKey, secret := os.Getenv("CONSUMER_KEY"), os.Getenv("CONSUMER_SECRET")
+	return New(consumerKey, secret, "", "", http.Client{})
 }
 
 func TestClient_addAccessTokenToUrl(t *testing.T) {

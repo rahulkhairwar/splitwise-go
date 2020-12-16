@@ -2,10 +2,8 @@ package splitwise
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"golang.org/x/oauth2"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -81,134 +79,6 @@ func (c *Client) HandleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c.accessToken = token.AccessToken
-}
-
-// GetCurrentUser API allows a user to fetch their account information. All fields of the user's account are returned.
-func (c *Client) GetCurrentUser(ctx context.Context) (*User, error) {
-	url := c.addAccessTokenToUrl(GetCurrentUserUrl)
-	r, err := c.Get(ctx, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp struct {
-		User *User `json:"user"`
-	}
-	bts, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println("resp.body : ", string(bts))
-	if err = json.Unmarshal(bts, &resp); err != nil {
-		return nil, err
-	}
-	return resp.User, err
-}
-
-// GetUser API allows a user to fetch another user's information. For the non-active user, all fields will not be
-// returned.
-func (c *Client) GetUser(ctx context.Context, id int64) (*User, error) {
-	url := c.addAccessTokenToUrl(fmt.Sprintf(GetUserByIdUrl, id))
-	r, err := c.Get(ctx, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp struct {
-		User *User `json:"user"`
-	}
-	bts, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err = json.Unmarshal(bts, &resp); err != nil {
-		return nil, err
-	}
-	return resp.User, err
-}
-
-// UpdateUser allows one to update information about their own account, and allows editing of the first_name, last_name,
-// and email for acquaintances who have not logged in yet.
-func (c *Client) UpdateUser(ctx context.Context, user *User) (*UpdateUserResponse, error) {
-	url := c.addAccessTokenToUrl(fmt.Sprintf(UpdateUserByIdUrl, user.Id))
-
-	type alias *User
-	req := (alias)(user)
-	req.NotificationSettings = user.NotificationSettings
-
-	resp, err := c.Post(ctx, url, req, nil)
-	if err != nil {
-		return nil, err
-	}
-	bts, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	var r UpdateUserResponse
-	if err = json.Unmarshal(bts, &r); err != nil {
-		return nil, err
-	}
-	return &r, nil
-}
-
-func (c *Client) GetGroups(ctx context.Context) ([]*Group, error) {
-	return nil, nil
-}
-
-func (c * Client) GetGroupById(ctx context.Context, id int64) (*Group, error) {
-	return nil, nil
-}
-
-func (c* Client) CreateGroup(ctx context.Context, g *Group) (*Group, error) {
-	type r struct {
-		*Group
-		Errors []string `json:"errors"`
-	}
-	var resp struct {
-		Group *r `json:"group"`
-	}
-	fmt.Println("resp : ", resp)
-	return nil, nil
-}
-
-func (c* Client) DeleteGroupById(ctx context.Context, id int64) (*DeleteResponse, error) {
-	return nil, nil
-}
-
-func (c* Client) UndeleteGroupById(ctx context.Context, id int64) (*DeleteResponse, error) {
-	return nil, nil
-}
-
-func (c* Client) AddUserToGroup(ctx context.Context, groupId, userId int64, firstName, lastName, email string) (*DeleteResponse, error) {
-	return nil, nil
-}
-
-func (c* Client) RemoveUserFromGroup(ctx context.Context, groupId, userId int64) (*DeleteResponse, error) {
-	return nil, nil
-}
-
-func (c* Client) GetFriends(ctx context.Context) ([]*Friend, error) {
-	return nil, nil
-}
-
-func (c* Client) GetFriendById(ctx context.Context, id int64) (*Friend, error) {
-	return nil, nil
-}
-
-func (c* Client) CreateFriend(ctx context.Context, userEmail, userFirstName, userLastName string) (*Friend, error) {
-	return nil, nil
-}
-
-func (c* Client) CreateFriends(ctx context.Context, userEmails, userFirstNames, userLastNames []string) ([]*Friend, error) {
-	return nil, nil
-}
-
-func (c* Client) DeleteFriendById(ctx context.Context, id int64) (*DeleteResponse, error) {
-	return nil, nil
-}
-
-func (c* Client) GetExpenses(ctx context.Context) ([]*Expense, error) {
-	return nil, nil
 }
 
 func (c *Client) addAccessTokenToUrl(url string) string {
